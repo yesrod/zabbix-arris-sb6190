@@ -29,9 +29,17 @@ then
 	modemAddress=192.168.100.1
 fi
 
+# some modems use cgi-bin/status
+# other modems use RgConnect.asp
+if [[ $(wget http://${modemAddress}/RgConnect.asp -O-) ]] 2>/dev/null; then
+  modemPath="RgConnect.asp"
+else
+  modemPath="cgi-bin/status"
+fi
+
 
 # Retrieve status webpage and parse tables into XML
-CURL_OUTPUT=$(curl -s http://$modemAddress/cgi-bin/status 2>/dev/null | hxnormalize -x -d -l 256 2> /dev/null | hxselect -i 'table.simpleTable' | sed 's/ kSym\/s//g' | sed 's/ MHz//g' | sed 's/ dBmV//g' | sed 's/ dB//g' | sed 's/<td> */<td>/g')
+CURL_OUTPUT=$(curl -s http://$modemAddress/$modemPath 2>/dev/null | hxnormalize -x -d -l 256 2> /dev/null | hxselect -i 'table.simpleTable' | sed 's/ kSym\/s//g' | sed 's/ MHz//g' | sed 's/ dBmV//g' | sed 's/ dB//g' | sed 's/<td> */<td>/g' | sed 's/&nbsp;//g')
 STATUS_XML="<tables>$CURL_OUTPUT</tables>"
 
 echo "{"
